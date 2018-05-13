@@ -4,7 +4,7 @@ const StoryPoints = require('./src/server/StoryPoints');
 const events = require('./src/events');
 
 const env = process.env.NODE_ENV || 'development';
-const port = 3010;
+const port = process.env.PORT || 3010;
 const app = express();
 
 app.engine('html', handlebars({
