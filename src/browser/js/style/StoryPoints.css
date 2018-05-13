@@ -1,0 +1,50 @@
+.container {
+  display: flex;
+  height: 100vh;
+}
+
+.sidebar {
+  margin: 10px auto;
+}
+
+.admin-controls {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.admin-controls button {
+  margin: 5px 0;
+}
+
+.main-content {
+  width: 80%;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  border-left: 1px solid black;
+}
+
+.story-point-container {
+  padding: 5px 10px;
+  border: 3px outset;
+  min-width: 100px;
+}
+
+.name {
+  font-weight: bold;
+}
+
+.story-point {
+  font-weight: bold;
+  font-size: 24px;
+}
+
+.status-table {
+  background-color: #bef3c9;
+}
+
+.status-table .pending {
+  background-color:#f3bebe;
+}

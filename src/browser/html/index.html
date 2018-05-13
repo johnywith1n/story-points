@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Story Points</title>
+
+  {{#if isProduction}}
+  <link rel="stylesheet" href="dist/app-styles.css">
+  {{/if}}
+</head>
+
+<body>
+  <div id="container">
+  </div>
+
+  {{#if isProduction}}
+  <script src="dist/app.bundle.js"></script>
+  {{else}}
+  <script src="http://localhost:9090/app.bundle.js"></script>
+  {{/if}}
+</body>
+</html>
