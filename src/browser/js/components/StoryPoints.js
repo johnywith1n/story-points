@@ -71,6 +71,9 @@ class StoryPoints extends React.Component {
 
   join = () => {
     const name = document.getElementById('name').value;
+    if (!name) {
+      return alert('Name cannot be empty');
+    }
     socket.emit(events.ADD_USER, {
       ...this.createPayload(),
       name: name
