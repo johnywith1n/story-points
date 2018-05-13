@@ -32,6 +32,10 @@
   min-width: 100px;
 }
 
+.story-points-list {
+  padding-right: 25px;
+}
+
 .name {
   font-weight: bold;
 }

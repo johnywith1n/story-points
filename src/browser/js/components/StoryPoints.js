@@ -156,15 +156,17 @@ class StoryPoints extends React.Component {
       mapping[val].length > 0 &&
       <div key={val} className={style['story-point-container']}>
         <div className={style['story-point']}>{val}</div>
-        <ul>
-          {
-            mapping[val].map(user => (
-              <li key={user}>
-                {user}
-              </li>
-            ))
-          }
-        </ul>
+        <div className={style['story-points-list']}>
+          <ul>
+            {
+              mapping[val].map(user => (
+                <li key={user}>
+                  {user}
+                </li>
+              ))
+            }
+          </ul>
+        </div>
       </div>
     ));
   }
