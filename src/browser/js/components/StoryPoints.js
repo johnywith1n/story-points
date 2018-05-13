@@ -69,6 +69,13 @@ class StoryPoints extends React.Component {
     socket.emit(events.RESET_POINTS, this.createPayload());
   }
 
+  onJoinKeyPress = (e) => {
+    if(e.key == 'Enter'){
+      e.preventDefault();
+      this.join();
+    }
+  }
+
   join = () => {
     const name = document.getElementById('name').value;
     if (!name) {
@@ -94,7 +101,9 @@ class StoryPoints extends React.Component {
         <form>
           <div className="form-group">
             <label>What is your name?</label>
-            <input id="name" type="text" className="form-control" placeholder="name" />
+            <input id="name" type="text" className="form-control" placeholder="name" 
+              onKeyPress={this.onJoinKeyPress}
+            />
           </div>
           <button type="button" className="btn btn-primary" onClick={this.join}>
             Join
