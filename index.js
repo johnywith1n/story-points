@@ -15,7 +15,7 @@ app.engine('html', handlebars({
 }));
 app.set('view engine', 'html');
 app.set('views', './src/browser/html');
-app.use('/dist',express.static(path.join(__dirname, 'src/browser/dist')));
+app.use('/dist', express.static(path.join(__dirname, 'src/browser/dist')));
 
 const getSecret = () => {
   return process.env.SECRET;
@@ -31,7 +31,7 @@ const verifyPayload = (data) => {
 
 app.get('/', (req, res) => {
   const secret = req.query.secret;
-  if (secret !== getSecret()) {
+  if (!verifyPayload({secret})) {
     return res.send('Hello World');
   }
 
