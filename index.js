@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const handlebars  = require('express-handlebars');
 const StoryPoints = require('./src/server/StoryPoints');
@@ -14,14 +15,18 @@ app.engine('html', handlebars({
 }));
 app.set('view engine', 'html');
 app.set('views', './src/browser/html');
-app.use(express.static('src/browser'));
+app.use('/dist',express.static(path.join(__dirname, 'src/browser/dist')));
 
 const getSecret = () => {
-  return process.env.SECRET || 'password';
+  return process.env.SECRET;
 };
 
 const verifyPayload = (data) => {
-  return data.secret === getSecret();
+  const secret = getSecret();
+  if (secret == null) {
+    return false;
+  }
+  return data.secret === secret;
 };
 
 app.get('/', (req, res) => {
