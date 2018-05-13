@@ -16,11 +16,24 @@ app.set('view engine', 'html');
 app.set('views', './src/browser/html');
 app.use(express.static('src/browser'));
 
-app.get('/', (req, res) => 
-  res.render('index.html', {
+const getSecret = () => {
+  return process.env.SECRET || 'password';
+};
+
+const verifyPayload = (data) => {
+  return data.secret === getSecret();
+};
+
+app.get('/', (req, res) => {
+  const secret = req.query.secret;
+  if (secret !== getSecret()) {
+    return res.send('Hello World');
+  }
+
+  return res.render('index.html', {
     isProduction: env === 'production'
-  })
-);
+  });
+});
 
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
@@ -31,6 +44,8 @@ const broadcastState = () => {
 
 io.on('connection', (socket) => {
   socket.on(events.ADD_USER, (data, fn) => {
+    if (!verifyPayload(data)) return;
+
     if (StoryPoints.addUser(data.name)) {
       broadcastState();
       fn(events.USER_JOINED);
@@ -40,21 +55,29 @@ io.on('connection', (socket) => {
   });
 
   socket.on(events.REMOVE_USER, (data) => {
+    if (!verifyPayload(data)) return;
+
     StoryPoints.removeUser(data.name);
     broadcastState();
   });
 
   socket.on(events.SET_POINT_VALUE, (data) => {
+    if (!verifyPayload(data)) return;
+    
     StoryPoints.setPointsForUser(data.name, data.value);
     broadcastState();
   });
 
   socket.on(events.SET_VISIBILITY, (data) => {
+    if (!verifyPayload(data)) return;
+    
     StoryPoints.setVisibility(data.visibility);
     broadcastState();
   });
 
-  socket.on(events.RESET_POINTS, () => {
+  socket.on(events.RESET_POINTS, (data) => {
+    if (!verifyPayload(data)) return;
+    
     StoryPoints.resetPoints();
     broadcastState();
   });

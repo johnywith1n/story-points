@@ -13,6 +13,8 @@ class StoryPoints extends React.Component {
   constructor(props) {
     super(props);
 
+    this.secret = new URLSearchParams(window.location.search).get('secret');
+
     this.state = {
       users: {}
     };
@@ -27,8 +29,17 @@ class StoryPoints extends React.Component {
 
     window.onbeforeunload = () => {
       if (this.state.name) {
-        socket.emit(events.REMOVE_USER, {name: this.state.name});
+        socket.emit(events.REMOVE_USER, {
+          ...this.createPayload(),
+          name: this.state.name
+        });
       }
+    };
+  }
+
+  createPayload = () => {
+    return {
+      secret: this.secret
     };
   }
 
@@ -41,22 +52,29 @@ class StoryPoints extends React.Component {
   selectStoryPoints = (e) => {
     const value = e.target.value;
     socket.emit(events.SET_POINT_VALUE, {
+      ...this.createPayload(),
       value,
       name: this.state.name
     });
   }
 
   toggleStoryPointSelectionVisibility = () => {
-    socket.emit(events.SET_VISIBILITY, {visibility: !this.state.visibility});
+    socket.emit(events.SET_VISIBILITY, {
+      ...this.createPayload(),
+      visibility: !this.state.visibility
+    });
   }
 
   resetAllPointSelections = () => {
-    socket.emit(events.RESET_POINTS);
+    socket.emit(events.RESET_POINTS, this.createPayload());
   }
 
   join = () => {
     const name = document.getElementById('name').value;
-    socket.emit(events.ADD_USER, {name: name}, (data) => {
+    socket.emit(events.ADD_USER, {
+      ...this.createPayload(),
+      name: name
+    }, (data) => {
       if (data === events.FAILED_JOIN) {
         alert('that name is already taken');
       } else {
