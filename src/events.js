@@ -7,4 +7,5 @@ module.exports = {
   SET_VISIBILITY: 'set visibility',
   RESET_POINTS: 'reset points',
   STATE_UPDATE: 'state update',
+  NEXT_STORY: 'next story',
 };

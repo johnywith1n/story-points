@@ -73,6 +73,10 @@ class StoryPoints extends React.Component {
     socket.emit(events.RESET_POINTS, this.createPayload());
   }
 
+  nextStory = () => {
+    socket.emit(events.NEXT_STORY, this.createPayload());
+  }
+
   onJoinKeyPress = (e) => {
     if(e.key == 'Enter'){
       e.preventDefault();
@@ -218,8 +222,8 @@ class StoryPoints extends React.Component {
                   <button className="btn btn-danger" type="button" onClick={this.toggleStoryPointSelectionVisibility}>
                     Toggle Point Selections Visibility
                   </button>
-                  <button className="btn btn-danger" type="button" onClick={this.resetAllPointSelections}>
-                    Reset All Users' Point Selections
+                  <button className="btn btn-danger" type="button" onClick={this.nextStory}>
+                    Next Story
                   </button>
                 </React.Fragment>
             }

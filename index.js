@@ -43,7 +43,7 @@ app.get('/', (req, res) => {
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 
-const broadcastState = (reset=false) => {
+const broadcastState = ({reset=false} = {}) => {
   io.sockets.emit(events.STATE_UPDATE, StoryPoints.getState(reset));
 };
 
@@ -84,7 +84,15 @@ io.on('connection', (socket) => {
     if (!verifyPayload(data)) return;
     
     StoryPoints.resetPoints();
-    broadcastState(reset=true);
+    broadcastState({reset:true});
+  });
+
+  socket.on(events.NEXT_STORY, (data) => {
+    if (!verifyPayload(data)) return;
+
+    StoryPoints.resetPoints();
+    StoryPoints.setVisibility(false);
+    broadcastState({reset:true});
   });
 });
 
