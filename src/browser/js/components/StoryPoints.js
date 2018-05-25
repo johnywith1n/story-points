@@ -22,6 +22,10 @@ class StoryPoints extends React.Component {
 
   componentDidMount() {
     socket.on(events.STATE_UPDATE, (data) => {
+      if (data.reset) {
+        document.getElementById('storyPointsSelect').value = NO_SELECTION;
+      }
+
       this.setState({
         ...data
       });

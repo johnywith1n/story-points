@@ -4,8 +4,15 @@ const state = {
 };
 
 module.exports = {
-  getState: () => {
-    return state;
+  getState: (reset) => {
+    let result = state;
+    if (reset) {
+      result = {
+        ...state,
+        reset: true
+      }
+    }
+    return result;
   },
   addUser: (user) => {
     if (user in state.users) {

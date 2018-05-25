@@ -43,8 +43,8 @@ app.get('/', (req, res) => {
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 
-const broadcastState = () => {
-  io.sockets.emit(events.STATE_UPDATE, StoryPoints.getState());
+const broadcastState = (reset=false) => {
+  io.sockets.emit(events.STATE_UPDATE, StoryPoints.getState(reset));
 };
 
 io.on('connection', (socket) => {
@@ -84,7 +84,7 @@ io.on('connection', (socket) => {
     if (!verifyPayload(data)) return;
     
     StoryPoints.resetPoints();
-    broadcastState();
+    broadcastState(reset=true);
   });
 });
 
