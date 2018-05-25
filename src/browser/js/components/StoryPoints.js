@@ -8,6 +8,8 @@ import style from 'style/StoryPoints.css';
 const socket = io();
 const NO_SELECTION = 'No Selection';
 const STORY_POINT_VALUES = [NO_SELECTION,'?',0,1,2,3,5,8,13,21,34,55];
+const STORAGE_NAME_KEY = 'name';
+const STORAGE_TOKEN_KEY = 'token';
 
 class StoryPoints extends React.Component {
   constructor(props) {
@@ -16,7 +18,8 @@ class StoryPoints extends React.Component {
     this.secret = new URLSearchParams(window.location.search).get('secret');
 
     this.state = {
-      users: {}
+      users: {},
+      initialized: false,
     };
   }
 
@@ -31,12 +34,33 @@ class StoryPoints extends React.Component {
       });
     });
 
+    const name = window.localStorage.getItem(STORAGE_NAME_KEY);
+    const sessionToken = window.localStorage.getItem(STORAGE_TOKEN_KEY);
+    if (name) {
+      socket.emit(events.ADD_USER, {
+        ...this.createPayload(),
+        name: name,
+        token: sessionToken
+      }, (data) => {
+        const stateUpdates = {
+          initialized: true
+        };
+        if (data.event === events.FAILED_JOIN) {
+          alert(`Failed to automatically reconnect. Name "${name}" is already taken`);
+        } else {
+          stateUpdates.name = name;
+        }
+        this.setState(stateUpdates);
+      });
+    } else {
+      this.setState({
+        initialized: true
+      });
+    }
+
     window.onbeforeunload = () => {
       if (this.state.name) {
-        socket.emit(events.REMOVE_USER, {
-          ...this.createPayload(),
-          name: this.state.name
-        });
+        socket.emit(events.REMOVE_USER, this.createPayload());
       }
     };
   }
@@ -59,7 +83,6 @@ class StoryPoints extends React.Component {
     socket.emit(events.SET_POINT_VALUE, {
       ...this.createPayload(),
       value,
-      name: this.state.name
     }, (data) => {
       if (data === events.DISCONNECTED) {
         alert('You\'ve been disconnected');
@@ -95,13 +118,17 @@ class StoryPoints extends React.Component {
     if (!name) {
       return alert('Name cannot be empty');
     }
+    const sessionToken = window.localStorage.getItem(STORAGE_TOKEN_KEY);
     socket.emit(events.ADD_USER, {
       ...this.createPayload(),
-      name: name
+      name: name,
+      token: sessionToken
     }, (data) => {
-      if (data === events.FAILED_JOIN) {
+      if (data.event === events.FAILED_JOIN) {
         alert('that name is already taken');
       } else {
+        window.localStorage.setItem(STORAGE_NAME_KEY, name);
+        window.localStorage.setItem(STORAGE_TOKEN_KEY, data.token);
         this.setState({
           name: name
         });
@@ -185,8 +212,20 @@ class StoryPoints extends React.Component {
     ));
   }
 
+  logout = () => {
+    window.localStorage.removeItem(STORAGE_NAME_KEY);
+    window.localStorage.removeItem(STORAGE_TOKEN_KEY);
+    window.location.reload();
+  }
+
   render() {
-    if (!this.state.name) {
+    if (!this.state.initialized) {
+      return (
+        <div className={`${style['container']} ${style['loading-container']}`}>
+          <i className={`fas fa-spinner fa-spin ${style['loading-spinner']}`}></i>
+        </div>
+      );
+    } else if (!this.state.name) {
       return this.getJoinPrompt();
     }
 
@@ -233,6 +272,11 @@ class StoryPoints extends React.Component {
                   </button>
                 </React.Fragment>
             }
+          </div>
+          <div className={`${style['admin-controls']} ${style['logout']}`}>
+            <button className="btn btn-primary" type="button" onClick={this.logout}>
+              Log out
+            </button>
           </div>
         </div>
         <div className={style['main-content']}>

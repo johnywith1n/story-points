@@ -1,7 +1,11 @@
+const crypto = require('crypto');
+
 const state = {
   users: {},
   visibility: false,
 };
+
+const sessionKeys = {};
 
 module.exports = {
   getState: (reset) => {
@@ -10,20 +14,22 @@ module.exports = {
       result = {
         ...state,
         reset: true
-      }
+      };
     }
     return result;
   },
   hasUser: (user) => {
     return user in state.users;
   },
-  addUser: (user) => {
-    if (user in state.users) {
-      return false;
+  addUser: (user, token) => {
+    if (user in state.users && !(sessionKeys[user] === token)) {
+      return null;
     }
-
     state.users[user] = {};
-    return true;
+
+    const sessionToken = crypto.randomBytes(256).toString('hex');
+    sessionKeys[user] = sessionToken;
+    return sessionToken;
   },
   removeUser: (user) => {
     delete state.users[user];

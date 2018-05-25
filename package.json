@@ -51,6 +51,8 @@
     "socket.io-client": "2.1.0"
   },
   "nodemonConfig": {
-    "ignore": ["src/browser/*"]
+    "ignore": [
+      "src/browser/*"
+    ]
   }
 }

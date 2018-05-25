@@ -51,11 +51,17 @@ io.on('connection', (socket) => {
   socket.on(events.ADD_USER, (data, fn) => {
     if (!verifyPayload(data)) return;
 
-    if (StoryPoints.addUser(data.name)) {
+    const sessionToken = StoryPoints.addUser(data.name, data.token);
+    if (sessionToken) {
       broadcastState();
-      fn(events.USER_JOINED);
+      fn({
+        event: events.USER_JOINED,
+        token: sessionToken
+      });
     } else {
-      fn(events.FAILED_JOIN);
+      fn({
+        event: events.FAILED_JOIN,
+      });
     }
   });
 
@@ -98,6 +104,7 @@ io.on('connection', (socket) => {
     StoryPoints.setVisibility(false);
     broadcastState({reset:true});
   });
+
 });
 
 http.listen(port, () => 

@@ -3,8 +3,19 @@
   height: 100vh;
 }
 
+.loading-container {
+  justify-content: center;
+  align-items: center;
+}
+
+.loading-spinner {
+  font-size: 144px;
+}
+
 .sidebar {
   margin: 10px auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .admin-controls {
@@ -15,6 +26,10 @@
 
 .admin-controls button {
   margin: 5px 0;
+}
+
+.logout {
+  margin-top: auto;
 }
 
 .main-content {
