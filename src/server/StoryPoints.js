@@ -26,7 +26,9 @@ module.exports = {
     delete state.users[user];
   },
   setPointsForUser: (user, points) => {
-    state.users[user].value = points;
+    if (state.users[user]) {
+      state.users[user].value = points;
+    }
   },
   setVisibility: (visibility) => {
     state.visibility = visibility;
