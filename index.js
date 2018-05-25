@@ -66,8 +66,12 @@ io.on('connection', (socket) => {
     broadcastState();
   });
 
-  socket.on(events.SET_POINT_VALUE, (data) => {
+  socket.on(events.SET_POINT_VALUE, (data, fn) => {
     if (!verifyPayload(data)) return;
+
+    if (!StoryPoints.hasUser(data.name)) {
+      return fn(events.DISCONNECTED);
+    }
     
     StoryPoints.setPointsForUser(data.name, data.value);
     broadcastState();

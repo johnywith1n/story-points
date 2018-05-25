@@ -8,4 +8,5 @@ module.exports = {
   RESET_POINTS: 'reset points',
   STATE_UPDATE: 'state update',
   NEXT_STORY: 'next story',
+  DISCONNECTED: 'disconnected',
 };

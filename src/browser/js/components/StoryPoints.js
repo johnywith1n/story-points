@@ -43,7 +43,8 @@ class StoryPoints extends React.Component {
 
   createPayload = () => {
     return {
-      secret: this.secret
+      secret: this.secret,
+      name: this.state.name,
     };
   }
 
@@ -59,6 +60,11 @@ class StoryPoints extends React.Component {
       ...this.createPayload(),
       value,
       name: this.state.name
+    }, (data) => {
+      if (data === events.DISCONNECTED) {
+        alert('You\'ve been disconnected');
+        window.location.reload();
+      }
     });
   }
 

@@ -14,6 +14,9 @@ module.exports = {
     }
     return result;
   },
+  hasUser: (user) => {
+    return user in state.users;
+  },
   addUser: (user) => {
     if (user in state.users) {
       return false;
