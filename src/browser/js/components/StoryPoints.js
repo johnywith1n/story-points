@@ -193,23 +193,28 @@ class StoryPoints extends React.Component {
   }
 
   getStoryPointsView(mapping) {
-    return STORY_POINT_VALUES.map(val => (
-      mapping[val].length > 0 &&
-      <div key={val} className={style['story-point-container']}>
-        <div className={style['story-point']}>{val}</div>
-        <div className={style['story-points-list']}>
-          <ul>
-            {
-              mapping[val].map(user => (
-                <li key={user}>
-                  {user}
-                </li>
-              ))
-            }
-          </ul>
+    return STORY_POINT_VALUES.map(val => {
+      if (mapping[val].length === 0) {
+        return null;
+      }
+      const label = val === NO_SELECTION ? 'No Selection' : val;
+      return (
+        <div key={val} className={style['story-point-container']}>
+          <div className={style['story-point']}>{label}</div>
+          <div className={style['story-points-list']}>
+            <ul>
+              {
+                mapping[val].map(user => (
+                  <li key={user}>
+                    {user}
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
         </div>
-      </div>
-    ));
+      );
+    });
   }
 
   logout = () => {
