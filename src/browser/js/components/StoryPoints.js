@@ -6,7 +6,7 @@ import events from '../../../events';
 import style from 'style/StoryPoints.css';
 
 const socket = io();
-const NO_SELECTION = 'No Selection';
+const NO_SELECTION = 'Select a story point...';
 const STORY_POINT_VALUES = [NO_SELECTION,'?',0,1,2,3,5,8,13,21,34,55];
 const STORAGE_NAME_KEY = 'name';
 const STORAGE_TOKEN_KEY = 'token';
@@ -138,16 +138,16 @@ class StoryPoints extends React.Component {
 
   getJoinPrompt() {
     return (
-      <div>
-        <form>
-          <div className="form-group">
-            <label>What is your name?</label>
-            <input id="name" type="text" className="form-control" placeholder="name" 
+      <div className={style['prompt-window']}>
+        <form className={style['form-container']}>
+          <div className={style['form-group']}>
+            <label className={style['form-label']}><b className={style['label']}>YOUR NAME</b></label>
+            <input id="name" type="text" className={`form-control ${style['input']}`} placeholder="" 
               onKeyPress={this.onJoinKeyPress}
             />
           </div>
-          <button type="button" className="btn btn-primary" onClick={this.join}>
-            Join
+          <button type="button" className={`btn btn-primary ${style['button']}`} onClick={this.join}>
+            JOIN
           </button>
         </form>
       </div>
@@ -163,8 +163,8 @@ class StoryPoints extends React.Component {
       <table className="table">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Status</th>
+            <th><span className={style['label']}>Name</span></th>
+            <th><span className={style['label']}>Status</span></th>
           </tr>
         </thead>
         <tbody className={style['status-table']}>
@@ -172,11 +172,11 @@ class StoryPoints extends React.Component {
             Object.keys(this.state.users).map(u => {
               const ready = this.state.users[u].value && this.state.users[u].value != NO_SELECTION;
               return (
-                <tr key={u} className={ready ? '' : style['pending']}>
-                  <td className={style['name']}>
+                <tr key={u} className={ready ? style['table-row'] : `${style['pending']} ${style['table-row']}`}>
+                  <td className={`${style['name']} ${style['td']}`}>
                     {u}
                   </td>
-                  <td>
+                  <td className={`${style['td']}`}>
                     {
                       ready ?
                         'Ready' :
@@ -241,9 +241,9 @@ class StoryPoints extends React.Component {
         <div className={style['sidebar']}>
           <div>
             <Form>
-              <FormGroup>
-                <Label for="storyPointsSelect">Select Story Point Value</Label>
-                <Input type="select" name="storyPointsSelect" id="storyPointsSelect"
+              <FormGroup className={style['left-form-section']}>
+                <Label for="storyPointsSelect" className={style['white-label']}>Select Story Point Value</Label>
+                <Input type="select" name="storyPointsSelect" id="storyPointsSelect" className={`${style['input']} ${style['select']}`} 
                   onChange={this.selectStoryPoints}
                 >
                   {
@@ -258,23 +258,23 @@ class StoryPoints extends React.Component {
             </Form>
           </div>
           <div className={style['admin-controls']}>
-            <button className="btn btn-primary" type="button" onClick={this.toggleAdminControls}>
+            <button className={`btn btn-primary ${style['button-inverted']}`} type="button" onClick={this.toggleAdminControls}>
               { this.state.showAdmin ? 'Hide' : 'Show' } Admin Controls
             </button>
             {
               this.state.showAdmin &&
                 <React.Fragment>
-                  <button className="btn btn-danger" type="button" onClick={this.toggleStoryPointSelectionVisibility}>
+                  <button className={`btn btn-danger ${style['button-red']}`}  type="button" onClick={this.toggleStoryPointSelectionVisibility}>
                     Toggle Point Selections Visibility
                   </button>
-                  <button className="btn btn-danger" type="button" onClick={this.nextStory}>
+                  <button className={`btn btn-danger ${style['button-red']}`} type="button" onClick={this.nextStory}>
                     Next Story
                   </button>
                 </React.Fragment>
             }
           </div>
           <div className={`${style['admin-controls']} ${style['logout']}`}>
-            <button className="btn btn-primary" type="button" onClick={this.logout}>
+            <button className={`btn btn-primary ${style['button-inverted']}`} type="button"  style={{padding: '0.5rem 3rem'}} onClick={this.logout}>
               Log out
             </button>
           </div>
