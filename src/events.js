@@ -9,4 +9,10 @@ module.exports = {
   STATE_UPDATE: 'state update',
   NEXT_STORY: 'next story',
   DISCONNECTED: 'disconnected',
+  GET_TIMER_STATE: 'get timer state',
+  TIMER_UPDATE: 'timer update',
+  START_TIMER: 'start timer',
+  CONTINUE_TIMER: 'continue timer',
+  RESET_TIMER: 'reset timer',
+  PAUSE_TIMER: 'pause timer'
 };

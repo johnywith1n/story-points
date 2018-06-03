@@ -2,6 +2,7 @@ const path = require('path');
 const express = require('express');
 const handlebars  = require('express-handlebars');
 const StoryPoints = require('./src/server/StoryPoints');
+const Timer = require('./src/server/Timer');
 const events = require('./src/events');
 
 const env = process.env.NODE_ENV || 'development';
@@ -42,6 +43,8 @@ app.get('/', (req, res) => {
 
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
+
+Timer.setIO(io);
 
 const broadcastState = ({reset=false} = {}) => {
   io.sockets.emit(events.STATE_UPDATE, StoryPoints.getState(reset));
@@ -103,6 +106,31 @@ io.on('connection', (socket) => {
     StoryPoints.resetPoints();
     StoryPoints.setVisibility(false);
     broadcastState({reset:true});
+  });
+
+  socket.on(events.START_TIMER, (data) => {
+    if (!verifyPayload(data) || !Number.isInteger(data.time)) return;
+    Timer.startTimer(data.time);
+  });
+
+  socket.on(events.RESET_TIMER, (data) => {
+    if (!verifyPayload(data)) return;
+    Timer.resetTimer();
+  });
+
+  socket.on(events.PAUSE_TIMER, (data) => {
+    if (!verifyPayload(data)) return;
+    Timer.pauseTimer();
+  });
+
+  socket.on(events.CONTINUE_TIMER, (data) => {
+    if (!verifyPayload(data)) return;
+    Timer.continueTimer();
+  });
+
+  socket.on(events.GET_TIMER_STATE, (data, fn) => {
+    if (!verifyPayload(data)) return;
+    fn(Timer.getState());
   });
 
 });

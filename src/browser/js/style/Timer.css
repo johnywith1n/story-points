@@ -1,0 +1,22 @@
+.container {
+  color: white;
+  margin: 10px 0;
+}
+
+.container :global(.btn-group) {
+  margin-top: 5px;
+}
+
+.time-remaining-label {
+  text-align: center;
+}
+
+.time-remaining {
+  font-size: 96px;
+  text-align: center;
+}
+
+.timer-controls {
+  display: flex;
+  justify-content: center;
+}

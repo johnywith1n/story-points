@@ -3,6 +3,8 @@ import { Form, FormGroup, Label, Input } from 'reactstrap';
 import io from 'socket.io-client';
 import events from '../../../events';
 
+import Timer from './Timer';
+
 import style from 'style/StoryPoints.css';
 
 const socket = io();
@@ -277,6 +279,9 @@ class StoryPoints extends React.Component {
                   </button>
                 </React.Fragment>
             }
+          </div>
+          <div>
+            <Timer socket={socket} createPayload={this.createPayload}/>
           </div>
           <div className={`${style['admin-controls']} ${style['logout']}`}>
             <button className={`btn btn-primary ${style['button-inverted']}`} type="button"  style={{padding: '0.5rem 3rem'}} onClick={this.logout}>
