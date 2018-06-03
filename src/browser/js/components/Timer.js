@@ -11,7 +11,8 @@ class Timer extends React.Component {
       startTime: 0,
       time: 0,
       showTimer: false,
-      paused: false
+      paused: false,
+      initialized: false,
     };
   }
 
@@ -25,7 +26,8 @@ class Timer extends React.Component {
       this.props.createPayload(),
       (data) => {
         this.setState({
-          ...data
+          ...data,
+          initialized: true
         });
       }
     );
@@ -67,12 +69,16 @@ class Timer extends React.Component {
   }
 
   render() {
+    if (!this.state.initialized) {
+      return null;
+    }
+
     return (
       <div className={style['container']}>
         {
           !this.state.showTimer &&
           <React.Fragment>
-            <label>Timer</label>
+            <label>Timer (seconds)</label>
             <div className="input-group">
               <input type="text" className="form-control"
                 value={this.state.startTime}
