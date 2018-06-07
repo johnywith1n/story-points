@@ -41,9 +41,7 @@ module.exports = {
       return;
     }
 
-    clearInterval(interval);
-    state.showTimer = false;
-    broadcastState();
+    this.hardResetTimer();
   },
   hardResetTimer: () => {
     clearInterval(interval);
