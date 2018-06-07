@@ -36,6 +36,7 @@ module.exports = {
     state.time = time;
     state.showTimer = true;
     state.paused = false;
+    broadcastState();
     interval = setInterval(() => {
       state.time = state.time - 1;
       if (state.time === 0) {
