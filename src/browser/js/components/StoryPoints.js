@@ -9,7 +9,7 @@ import style from 'style/StoryPoints.css';
 
 const socket = io();
 const NO_SELECTION = 'Select a story point...';
-const STORY_POINT_VALUES = [NO_SELECTION,'?',0,1,2,3,5,8,13,21,34,55];
+const STORY_POINT_VALUES = [NO_SELECTION,'?',0,0.5,1,2,3,5,8,13,21,34,55];
 const STORAGE_NAME_KEY = 'name';
 const STORAGE_TOKEN_KEY = 'token';
 

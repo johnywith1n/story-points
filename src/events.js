@@ -14,5 +14,6 @@ module.exports = {
   START_TIMER: 'start timer',
   CONTINUE_TIMER: 'continue timer',
   RESET_TIMER: 'reset timer',
-  PAUSE_TIMER: 'pause timer'
+  PAUSE_TIMER: 'pause timer',
+  HARD_RESET_TIMER: 'hard reset timer',
 };

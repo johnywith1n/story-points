@@ -45,6 +45,13 @@ module.exports = {
     state.showTimer = false;
     broadcastState();
   },
+  hardResetTimer: () => {
+    clearInterval(interval);
+    state.time = 0;
+    state.paused = false;
+    state.showTimer = false;
+    broadcastState();
+  },
   continueTimer: () => {
     if (!state.paused || !state.showTimer) {
       return;

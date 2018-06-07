@@ -58,6 +58,10 @@ class Timer extends React.Component {
     this.props.socket.emit(events.PAUSE_TIMER, this.props.createPayload());
   }
 
+  hardReset = () => {
+    this.props.socket.emit(events.HARD_RESET_TIMER, this.props.createPayload());
+  }
+
   updateTime = (e) => {
     const time = parseInt(e.target.value || 0);
     if (!Number.isInteger(time)) {
@@ -86,6 +90,7 @@ class Timer extends React.Component {
             </div>
             <div className="btn-group" role="group">
               <button type="button" className="btn btn-primary" onClick={this.startTimer}>Start</button>
+              <button type="button" className="btn btn-danger" onClick={this.hardReset}>Hard Reset</button>
             </div>
           </React.Fragment>
         }

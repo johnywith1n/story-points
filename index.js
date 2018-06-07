@@ -133,6 +133,11 @@ io.on('connection', (socket) => {
     fn(Timer.getState());
   });
 
+  socket.on(events.HARD_RESET_TIMER, (data) => {
+    if (!verifyPayload(data)) return;
+    Timer.hardResetTimer();
+  });
+
 });
 
 http.listen(port, () => 
