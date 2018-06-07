@@ -13,6 +13,14 @@ const broadcastState = () => {
   io.sockets.emit(events.TIMER_UPDATE, state);
 };
 
+const hardResetTimer = () => {
+  clearInterval(interval);
+  state.time = 0;
+  state.paused = false;
+  state.showTimer = false;
+  broadcastState();
+};
+
 module.exports = {
   setIO: (_io) => {
     io = _io;
@@ -41,15 +49,9 @@ module.exports = {
       return;
     }
 
-    this.hardResetTimer();
+    hardResetTimer();
   },
-  hardResetTimer: () => {
-    clearInterval(interval);
-    state.time = 0;
-    state.paused = false;
-    state.showTimer = false;
-    broadcastState();
-  },
+  hardResetTimer,
   continueTimer: () => {
     if (!state.paused || !state.showTimer) {
       return;
