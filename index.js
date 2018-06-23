@@ -21,6 +21,10 @@ const getSecret = () => {
   return process.env.SECRET;
 };
 
+const getAdminSecret = () => {
+  return process.env.ADMIN_SECRET;
+}
+
 const verifyPayload = (data, requireRoom=true) => {
   const secret = getSecret();
   if (secret == null) {
@@ -33,6 +37,15 @@ const verifyPayload = (data, requireRoom=true) => {
 
   return data.secret === secret;
 };
+
+const verifyAdminPayload = (data) =>{
+  const secret = getAdminSecret();
+  if (secret == null) {
+    return false;
+  }
+
+  return data.secret === secret;
+}
 
 app.get('/', (req, res) => {
   const secret = req.query.secret;
@@ -47,7 +60,7 @@ app.get('/', (req, res) => {
 
 app.get('/admin/serverState', (req, res) => {
   const secret = req.query.secret;
-  if (!verifyPayload({secret}, false)) {
+  if (!verifyAdminPayload({secret})) {
     return res.send('to be implemented');
   }
 

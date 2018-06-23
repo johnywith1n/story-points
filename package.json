@@ -6,7 +6,7 @@
   "scripts": {
     "start": "NODE_ENV=production node index.js",
     "webpack-dev": "webpack-dev-server --port 9099 --progress --colors --hot --config ./webpack.dev.js",
-    "start-dev": "SECRET=password nodemon index.js",
+    "start-dev": "SECRET=password ADMIN_SECRET=password nodemon index.js",
     "build": "webpack --config webpack.prod.js",
     "deploy": "git push heroku master",
     "postinstall": "yarn build"
