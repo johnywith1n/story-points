@@ -28,21 +28,38 @@
   align-items: center;
   display: flex;
   flex-direction: column;
-  padding: 5rem;
+  padding: 0 5rem;
   box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.55);
   background-color: #FFFFFF;
-  height: 24rem;
+  height: 26rem;
   border-radius: 1rem;
 }
 
 .form-group {
-  margin-bottom: 4rem;
+  margin-bottom: 2rem;
 }
 
 .form-label {
   margin-bottom: 2rem;
   display: flex;
   justify-content: center;
+}
+
+.room-name-container {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.room-name-text {
+  text-align: center;
+  color: #ffff00;
+  border-bottom: 2px solid #5bbbeb;
+  margin-bottom: 2rem;
+}
+
+.room-name {
+  font-weight: bold;
+  color: #00ffff;
 }
 
 .input {
@@ -216,4 +233,18 @@
 .td {
   padding: 0.5rem 0.8rem !important;
   font-size: 1rem;
+}
+
+.inline-checkbox-label {
+  color: #ffffff;
+  border-bottom: 2px solid #5bbbeb;
+}
+
+.qa-user-name {
+  color: red;
+}
+
+.qa-user-label {
+  color: red;
+  font-weight: bold;
 }

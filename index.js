@@ -1,8 +1,7 @@
 const path = require('path');
 const express = require('express');
 const handlebars  = require('express-handlebars');
-const StoryPoints = require('./src/server/StoryPoints');
-const Timer = require('./src/server/Timer');
+const Rooms = require('./src/server/Rooms');
 const events = require('./src/events');
 
 const env = process.env.NODE_ENV || 'development';
@@ -22,17 +21,22 @@ const getSecret = () => {
   return process.env.SECRET;
 };
 
-const verifyPayload = (data) => {
+const verifyPayload = (data, requireRoom=true) => {
   const secret = getSecret();
   if (secret == null) {
     return false;
   }
+
+  if (requireRoom && data.room == null) {
+    return false;
+  }
+
   return data.secret === secret;
 };
 
 app.get('/', (req, res) => {
   const secret = req.query.secret;
-  if (!verifyPayload({secret})) {
+  if (!verifyPayload({secret}, false)) {
     return res.send('Hello World');
   }
 
@@ -44,103 +48,134 @@ app.get('/', (req, res) => {
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 
-Timer.setIO(io);
+const rooms = new Rooms(io);
 
-const broadcastState = ({reset=false} = {}) => {
-  io.sockets.emit(events.STATE_UPDATE, StoryPoints.getState(reset));
+const broadcastState = ({room='', reset=false} = {}) => {
+  if (!room) {
+    // eslint-disable-next-line no-console
+    console.error('broadcasting state without room');
+    return;
+  }
+  io.sockets.to(room).emit(events.STATE_UPDATE, rooms.getRoom(room).storyPoints.getState(reset));
 };
 
 io.on('connection', (socket) => {
   socket.on(events.ADD_USER, (data, fn) => {
     if (!verifyPayload(data)) return;
-
-    const sessionToken = StoryPoints.addUser(data.name, data.token);
+    const room = rooms.getRoom(data.room);
+    const sessionToken = room.storyPoints.addUser(data.name, data.token, socket.id, data.isQA);
     if (sessionToken) {
-      broadcastState();
-      fn({
-        event: events.USER_JOINED,
-        token: sessionToken
+      socket.join(data.room, () => {
+        rooms.addSocketId(socket.id, room);
+        broadcastState({room: data.room});
+        fn({
+          event: events.USER_JOINED,
+          token: sessionToken
+        });
       });
     } else {
+      rooms.cleanupIfEmpty(data.room);
       fn({
         event: events.FAILED_JOIN,
       });
     }
   });
 
+  socket.on('disconnect', () => {
+    const room = rooms.getRoomForSocketId(socket.id);
+    if (room && room.storyPoints.removeUserBySocketId(socket.id)) {
+      rooms.removeSocketid(socket.id);
+      broadcastState({room:room.roomName});
+      rooms.cleanupIfEmpty(room.roomName);
+    }
+  });
+
   socket.on(events.REMOVE_USER, (data) => {
     if (!verifyPayload(data)) return;
+    socket.leave(data.room);
+    rooms.getRoom(data.room).storyPoints.removeUser(data.name);
+    broadcastState({room:data.room});
+    rooms.cleanupIfEmpty(data.room);
+  });
 
-    StoryPoints.removeUser(data.name);
-    broadcastState();
+  socket.on(events.SET_QA_STATUS, (data) => {
+    if (!verifyPayload(data)) return;
+    rooms.getRoom(data.room).storyPoints.setQAStatusForUser(data.name, data.isQA);
+    broadcastState({room:data.room});
   });
 
   socket.on(events.SET_POINT_VALUE, (data, fn) => {
     if (!verifyPayload(data)) return;
-
-    if (!StoryPoints.hasUser(data.name)) {
+    const room = rooms.getRoom(data.room);
+    if (!room.storyPoints.hasUser(data.name)) {
       return fn(events.DISCONNECTED);
     }
     
-    StoryPoints.setPointsForUser(data.name, data.value);
-    broadcastState();
+    room.storyPoints.setPointsForUser(data.name, data.value);
+    broadcastState({room:data.room});
   });
 
   socket.on(events.SET_VISIBILITY, (data) => {
     if (!verifyPayload(data)) return;
-    
-    StoryPoints.setVisibility(data.visibility);
-    broadcastState();
+    const room = rooms.getRoom(data.room);
+    room.storyPoints.setVisibility(data.visibility);
+    broadcastState({room:data.room});
   });
 
   socket.on(events.RESET_POINTS, (data) => {
     if (!verifyPayload(data)) return;
-    
-    StoryPoints.resetPoints();
-    broadcastState({reset:true});
+    const room = rooms.getRoom(data.room);
+    room.storyPoints.resetPoints();
+    broadcastState({room:data.room, reset:true});
   });
 
   socket.on(events.NEXT_STORY, (data) => {
     if (!verifyPayload(data)) return;
-
-    StoryPoints.resetPoints();
-    StoryPoints.setVisibility(false);
-    broadcastState({reset:true});
+    const room = rooms.getRoom(data.room);
+    room.storyPoints.resetPoints();
+    room.storyPoints.setVisibility(false);
+    broadcastState({room:data.room, reset:true});
   });
 
   socket.on(events.START_TIMER, (data) => {
     if (!verifyPayload(data) || !Number.isInteger(data.time)) return;
-    Timer.startTimer(data.time);
+    const room = rooms.getRoom(data.room);
+    room.timer.startTimer(data.time);
   });
 
   socket.on(events.RESET_TIMER, (data) => {
     if (!verifyPayload(data)) return;
-    Timer.resetTimer();
+    const room = rooms.getRoom(data.room);
+    room.timer.resetTimer();
   });
 
   socket.on(events.PAUSE_TIMER, (data) => {
     if (!verifyPayload(data)) return;
-    Timer.pauseTimer();
+    const room = rooms.getRoom(data.room);
+    room.timer.pauseTimer();
   });
 
   socket.on(events.CONTINUE_TIMER, (data) => {
     if (!verifyPayload(data)) return;
-    Timer.continueTimer();
+    const room = rooms.getRoom(data.room);
+    room.timer.continueTimer();
   });
 
   socket.on(events.GET_TIMER_STATE, (data, fn) => {
     if (!verifyPayload(data)) return;
-    fn(Timer.getState());
+    const room = rooms.getRoom(data.room);
+    fn(room.timer.getState());
   });
 
   socket.on(events.HARD_RESET_TIMER, (data) => {
     if (!verifyPayload(data)) return;
-    Timer.hardResetTimer();
+    const room = rooms.getRoom(data.room);
+    room.timer.hardResetTimer();
   });
 
 });
 
-http.listen(port, () => 
+http.listen(port, () =>
   // eslint-disable-next-line no-console
   console.log(`Example app listening on port ${port}!`)
 );

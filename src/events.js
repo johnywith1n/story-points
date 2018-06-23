@@ -16,4 +16,5 @@ module.exports = {
   RESET_TIMER: 'reset timer',
   PAUSE_TIMER: 'pause timer',
   HARD_RESET_TIMER: 'hard reset timer',
+  SET_QA_STATUS: 'set qa status',
 };

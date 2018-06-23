@@ -1,50 +1,92 @@
 const crypto = require('crypto');
 
-const state = {
-  users: {},
-  visibility: false,
-};
+class StoryPoints {
+  constructor(roomName) {
+    this.roomName = roomName;
+    this.state = {
+      users: {},
+      visibility: false,
+    };
+    this.socketIdsToUsers = {};
+    this.usersToSocketIds = {};
 
-const sessionKeys = {};
+    this.sessionKeys = {};
+  }
 
-module.exports = {
-  getState: (reset) => {
-    let result = state;
+  users() {
+    return Object.keys(this.state.users);
+  }
+
+  getState(reset) {
+    let result = this.state;
     if (reset) {
       result = {
-        ...state,
+        ...this.state,
         reset: true
       };
     }
     return result;
-  },
-  hasUser: (user) => {
-    return user in state.users;
-  },
-  addUser: (user, token) => {
-    if (user in state.users && !(sessionKeys[user] === token)) {
+  }
+
+  hasUser(user) {
+    return user in this.state.users;
+  }
+
+  addUser(user, token, socketId, isQA) {
+    if (user in this.state.users && !(this.sessionKeys[user] === token)) {
       return null;
     }
-    state.users[user] = {};
+    this.state.users[user] = {
+      isQA
+    };
+    this.socketIdsToUsers[socketId] = user;
+    this.usersToSocketIds[user] = socketId;
 
     const sessionToken = crypto.randomBytes(256).toString('hex');
-    sessionKeys[user] = sessionToken;
+    this.sessionKeys[user] = sessionToken;
     return sessionToken;
-  },
-  removeUser: (user) => {
-    delete state.users[user];
-  },
-  setPointsForUser: (user, points) => {
-    if (state.users[user]) {
-      state.users[user].value = points;
-    }
-  },
-  setVisibility: (visibility) => {
-    state.visibility = visibility;
-  },
-  resetPoints: () => {
-    for (let u in state.users) {
-      state.users[u].value = null;
+  }
+
+  removeUser(user) {
+    delete this.state.users[user];
+    const socketId = this.usersToSocketIds[user];
+    delete this.usersToSocketIds[user];
+    delete this.socketIdsToUsers[socketId];
+  }
+
+  removeUserBySocketId(socketId) {
+    const user = this.socketIdsToUsers[socketId];
+    if (user) {
+      delete this.socketIdsToUsers[socketId];
+      delete this.usersToSocketIds[user];
+      delete this.state.users[user];
+      return true;
+    } else {
+      return false;
     }
   }
-};
+
+  setQAStatusForUser(user, isQA) {
+    if (this.state.users[user]) {
+      this.state.users[user].isQA = isQA;
+    }
+  }
+
+  setPointsForUser(user, points) {
+    if (this.state.users[user]) {
+      this.state.users[user].value = points;
+    }
+  }
+
+  setVisibility(visibility) {
+    this.state.visibility = visibility;
+  }
+
+  resetPoints() {
+    for (let u in this.state.users) {
+      this.state.users[u].value = null;
+    }
+  }
+}
+
+module.exports = StoryPoints;

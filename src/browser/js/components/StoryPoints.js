@@ -10,8 +10,11 @@ import style from 'style/StoryPoints.css';
 const socket = io();
 const NO_SELECTION = 'Select a story point...';
 const STORY_POINT_VALUES = [NO_SELECTION,'?',0,0.5,1,2,3,5,8,13,21,34,55];
+
 const STORAGE_NAME_KEY = 'name';
 const STORAGE_TOKEN_KEY = 'token';
+const STORAGE_IS_QA_KEY = 'isQA';
+const STORAGE_ROOM_NAME = 'room';
 
 class StoryPoints extends React.Component {
   constructor(props) {
@@ -22,10 +25,16 @@ class StoryPoints extends React.Component {
     this.state = {
       users: {},
       initialized: false,
+      isQA: false,
     };
   }
 
   componentDidMount() {
+    socket.on('disconnect', () => {
+      alert('Lost connection with the server. The page will refresh now');
+      window.location.reload();
+    });
+
     socket.on(events.STATE_UPDATE, (data) => {
       if (data.reset) {
         document.getElementById('storyPointsSelect').value = NO_SELECTION;
@@ -38,19 +47,25 @@ class StoryPoints extends React.Component {
 
     const name = window.localStorage.getItem(STORAGE_NAME_KEY);
     const sessionToken = window.localStorage.getItem(STORAGE_TOKEN_KEY);
-    if (name) {
+    const room = window.localStorage.getItem(STORAGE_ROOM_NAME);
+    const isQA = window.localStorage.getItem(STORAGE_IS_QA_KEY) === 'true';
+    if (name && room) {
       socket.emit(events.ADD_USER, {
         ...this.createPayload(),
-        name: name,
-        token: sessionToken
+        name,
+        room,
+        token: sessionToken,
+        isQA,
       }, (data) => {
         const stateUpdates = {
-          initialized: true
+          initialized: true,
         };
         if (data.event === events.FAILED_JOIN) {
           alert(`Failed to automatically reconnect. Name "${name}" is already taken`);
         } else {
           stateUpdates.name = name;
+          stateUpdates.room = room;
+          stateUpdates.isQA = isQA;
         }
         this.setState(stateUpdates);
       });
@@ -71,6 +86,7 @@ class StoryPoints extends React.Component {
     return {
       secret: this.secret,
       name: this.state.name,
+      room: this.state.room,
     };
   }
 
@@ -117,22 +133,28 @@ class StoryPoints extends React.Component {
 
   join = () => {
     const name = document.getElementById('name').value;
+    const room = document.getElementById('room-name').value;
     if (!name) {
       return alert('Name cannot be empty');
+    } else if (!room) {
+      return alert('Room name cannot be empty');
     }
     const sessionToken = window.localStorage.getItem(STORAGE_TOKEN_KEY);
     socket.emit(events.ADD_USER, {
       ...this.createPayload(),
-      name: name,
-      token: sessionToken
+      name,
+      room,
+      token: sessionToken,
     }, (data) => {
       if (data.event === events.FAILED_JOIN) {
         alert('that name is already taken');
       } else {
         window.localStorage.setItem(STORAGE_NAME_KEY, name);
         window.localStorage.setItem(STORAGE_TOKEN_KEY, data.token);
+        window.localStorage.setItem(STORAGE_ROOM_NAME, room);
         this.setState({
-          name: name
+          name,
+          room,
         });
       }
     });
@@ -145,6 +167,12 @@ class StoryPoints extends React.Component {
           <div className={style['form-group']}>
             <label className={style['form-label']}><b className={style['label']}>YOUR NAME</b></label>
             <input id="name" type="text" className={`form-control ${style['input']}`} placeholder="" 
+              onKeyPress={this.onJoinKeyPress}
+            />
+          </div>
+          <div className={style['form-group']}>
+            <label className={style['form-label']}><b className={style['label']}>ROOM NAME</b></label>
+            <input id="room-name" type="text" className={`form-control ${style['input']}`} placeholder="" 
               onKeyPress={this.onJoinKeyPress}
             />
           </div>
@@ -194,7 +222,7 @@ class StoryPoints extends React.Component {
     );
   }
 
-  getStoryPointsView(mapping) {
+  getStoryPointsView(mapping, userQAStatus) {
     return STORY_POINT_VALUES.map(val => {
       if (mapping[val].length === 0) {
         return null;
@@ -207,7 +235,14 @@ class StoryPoints extends React.Component {
             <ul>
               {
                 mapping[val].map(user => (
-                  <li key={user}>
+                  <li key={user}
+                    className={userQAStatus[user] ? style['qa-user-name'] :''}>
+                    {
+                      userQAStatus[user] &&
+                      <span className={style['qa-user-label']}>
+                        QA:&nbsp;
+                      </span>
+                    }
                     {user}
                   </li>
                 ))
@@ -219,9 +254,22 @@ class StoryPoints extends React.Component {
     });
   }
 
+  setQAStatus = () => {
+    this.setState((prevState) => ({
+      isQA: !prevState.isQA
+    }), () => {
+      window.localStorage.setItem(STORAGE_IS_QA_KEY, this.state.isQA);
+      socket.emit(events.SET_QA_STATUS, {
+        ...this.createPayload(),
+        isQA: this.state.isQA
+      });
+    });
+  }
+
   logout = () => {
     window.localStorage.removeItem(STORAGE_NAME_KEY);
     window.localStorage.removeItem(STORAGE_TOKEN_KEY);
+    window.localStorage.removeItem(STORAGE_IS_QA_KEY);
     window.location.reload();
   }
 
@@ -235,18 +283,24 @@ class StoryPoints extends React.Component {
     } else if (!this.state.name) {
       return this.getJoinPrompt();
     }
-
     const mapping = {};
+    const userQAStatus = {};
     STORY_POINT_VALUES.forEach(v => mapping[v] = []);
     Object.keys(this.state.users).forEach(u => {
       const value = this.state.users[u].value || NO_SELECTION;
       mapping[value].push(u);
+      userQAStatus[u] = this.state.users[u].isQA;
     });
 
     return (
       <div className={style['container']}>
         <div className={style['sidebar']}>
           <div>
+            <div className={style['room-name-container']}>
+              <span className={style['room-name-text']}>
+              Room: <span className={style['room-name']}>{this.state.room}</span>
+              </span>
+            </div>
             <Form>
               <FormGroup className={style['left-form-section']}>
                 <Label for="storyPointsSelect" className={style['white-label']}>Select Story Point Value</Label>
@@ -261,6 +315,15 @@ class StoryPoints extends React.Component {
                     ))
                   }
                 </Input>
+              </FormGroup>
+              <FormGroup check>
+                <Label check className={style['inline-checkbox-label']}>
+                  <Input type="checkbox"
+                    checked={this.state.isQA}
+                    onChange={this.setQAStatus}
+                  />
+                  Are you QA?
+                </Label>
               </FormGroup>
             </Form>
           </div>
@@ -292,7 +355,7 @@ class StoryPoints extends React.Component {
         <div className={style['main-content']}>
           {
             this.state.visibility ?
-              this.getStoryPointsView(mapping) :
+              this.getStoryPointsView(mapping, userQAStatus) :
               this.showUserStatus()
           }
         </div>
