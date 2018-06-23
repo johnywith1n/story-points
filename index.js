@@ -45,6 +45,22 @@ app.get('/', (req, res) => {
   });
 });
 
+app.get('/admin/serverState', (req, res) => {
+  const secret = req.query.secret;
+  if (!verifyPayload({secret}, false)) {
+    return res.send('to be implemented');
+  }
+
+  const state = {};
+  Object.entries(rooms.rooms).forEach(([roomName, room]) => {
+    const roomState = {};
+    state[roomName] = roomState;
+    roomState.storyPoints = room.storyPoints.state;
+    roomState.timer = room.timer.state;
+  });
+  return res.json(state);
+});
+
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 
