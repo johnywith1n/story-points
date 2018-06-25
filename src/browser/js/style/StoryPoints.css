@@ -248,3 +248,15 @@
   color: red;
   font-weight: bold;
 }
+
+.disconnected-opacity {
+  opacity: 0.2;
+}
+
+.disconnected-message {
+  position: fixed;
+  top: 25%;
+  left: 25%;
+  font-weight: bold;
+  font-size: 72px;
+}

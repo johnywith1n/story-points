@@ -26,13 +26,16 @@ class StoryPoints extends React.Component {
       users: {},
       initialized: false,
       isQA: false,
+      disconnected: false,
     };
   }
 
   componentDidMount() {
     socket.on('disconnect', () => {
-      alert('Lost connection with the server. The page will refresh now');
-      window.location.reload();
+      alert('Lost connection with the server. Please refresh the page to reconnect');
+      this.setState({
+        disconnected: true
+      });
     });
 
     socket.on(events.STATE_UPDATE, (data) => {
@@ -103,7 +106,7 @@ class StoryPoints extends React.Component {
       value,
     }, (data) => {
       if (data === events.DISCONNECTED) {
-        alert('You\'ve been disconnected');
+        alert('You\'ve been disconnected. This page will now refresh.');
         window.location.reload();
       }
     });
@@ -293,73 +296,81 @@ class StoryPoints extends React.Component {
     });
 
     return (
-      <div className={style['container']}>
-        <div className={style['sidebar']}>
-          <div>
-            <div className={style['room-name-container']}>
-              <span className={style['room-name-text']}>
-              Room: <span className={style['room-name']}>{this.state.room}</span>
-              </span>
-            </div>
-            <Form>
-              <FormGroup className={style['left-form-section']}>
-                <Label for="storyPointsSelect" className={style['white-label']}>Select Story Point Value</Label>
-                <Input type="select" name="storyPointsSelect" id="storyPointsSelect" className={`${style['input']} ${style['select']}`} 
-                  onChange={this.selectStoryPoints}
-                >
-                  {
-                    STORY_POINT_VALUES.map(v => (
-                      <option key={v} value={v}>
-                        {v}
-                      </option>
-                    ))
-                  }
-                </Input>
-              </FormGroup>
-              <FormGroup check>
-                <Label check className={style['inline-checkbox-label']}>
-                  <Input type="checkbox"
-                    checked={this.state.isQA}
-                    onChange={this.setQAStatus}
-                  />
-                  Are you QA?
-                </Label>
-              </FormGroup>
-            </Form>
+      <React.Fragment>
+        {
+          this.state.disconnected &&
+          <div className={style['disconnected-message']}>
+            Please refresh the page
           </div>
-          <div className={style['admin-controls']}>
-            <button className={`btn btn-primary ${style['button-inverted']}`} type="button" onClick={this.toggleAdminControls}>
-              { this.state.showAdmin ? 'Hide' : 'Show' } Admin Controls
-            </button>
+        }
+        <div className={`${style['container']} ${this.state.disconnected ? style['disconnected-opacity'] : ''}`}>
+          <div className={style['sidebar']}>
+            <div>
+              <div className={style['room-name-container']}>
+                <span className={style['room-name-text']}>
+                Room: <span className={style['room-name']}>{this.state.room}</span>
+                </span>
+              </div>
+              <Form>
+                <FormGroup className={style['left-form-section']}>
+                  <Label for="storyPointsSelect" className={style['white-label']}>Select Story Point Value</Label>
+                  <Input type="select" name="storyPointsSelect" id="storyPointsSelect" className={`${style['input']} ${style['select']}`} 
+                    onChange={this.selectStoryPoints}
+                  >
+                    {
+                      STORY_POINT_VALUES.map(v => (
+                        <option key={v} value={v}>
+                          {v}
+                        </option>
+                      ))
+                    }
+                  </Input>
+                </FormGroup>
+                <FormGroup check>
+                  <Label check className={style['inline-checkbox-label']}>
+                    <Input type="checkbox"
+                      checked={this.state.isQA}
+                      onChange={this.setQAStatus}
+                    />
+                    Are you QA?
+                  </Label>
+                </FormGroup>
+              </Form>
+            </div>
+            <div className={style['admin-controls']}>
+              <button className={`btn btn-primary ${style['button-inverted']}`} type="button" onClick={this.toggleAdminControls}>
+                { this.state.showAdmin ? 'Hide' : 'Show' } Admin Controls
+              </button>
+              {
+                this.state.showAdmin &&
+                  <React.Fragment>
+                    <button className={`btn btn-danger ${style['button-red']}`}  type="button" onClick={this.toggleStoryPointSelectionVisibility}>
+                      {this.state.visibility ? 'Hide' : 'Show'} Point Selections
+                    </button>
+                    <button className={`btn btn-danger ${style['button-red']}`} type="button" onClick={this.nextStory}>
+                      Next Story
+                    </button>
+                  </React.Fragment>
+              }
+            </div>
+            <div>
+              <Timer socket={socket} createPayload={this.createPayload}/>
+            </div>
+            <div className={`${style['admin-controls']} ${style['logout']}`}>
+              <button className={`btn btn-primary ${style['button-inverted']}`} type="button"  style={{padding: '0.5rem 3rem'}} onClick={this.logout}>
+                Log out
+              </button>
+            </div>
+          </div>
+          <div className={style['main-content']}>
             {
-              this.state.showAdmin &&
-                <React.Fragment>
-                  <button className={`btn btn-danger ${style['button-red']}`}  type="button" onClick={this.toggleStoryPointSelectionVisibility}>
-                    {this.state.visibility ? 'Hide' : 'Show'} Point Selections
-                  </button>
-                  <button className={`btn btn-danger ${style['button-red']}`} type="button" onClick={this.nextStory}>
-                    Next Story
-                  </button>
-                </React.Fragment>
+              this.state.visibility ?
+                this.getStoryPointsView(mapping, userQAStatus) :
+                this.showUserStatus()
             }
           </div>
-          <div>
-            <Timer socket={socket} createPayload={this.createPayload}/>
-          </div>
-          <div className={`${style['admin-controls']} ${style['logout']}`}>
-            <button className={`btn btn-primary ${style['button-inverted']}`} type="button"  style={{padding: '0.5rem 3rem'}} onClick={this.logout}>
-              Log out
-            </button>
-          </div>
         </div>
-        <div className={style['main-content']}>
-          {
-            this.state.visibility ?
-              this.getStoryPointsView(mapping, userQAStatus) :
-              this.showUserStatus()
-          }
-        </div>
-      </div>
+      </React.Fragment>
     );
   }
 }
