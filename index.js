@@ -75,7 +75,9 @@ app.get('/admin/serverState', (req, res) => {
 });
 
 const http = require('http').Server(app);
-const io = require('socket.io')(http);
+const io = require('socket.io')(http, {
+  pingTimeout: 300000 // chrome will timeout in under a minute if tab is left in background
+});
 
 const rooms = new Rooms(io);
 
