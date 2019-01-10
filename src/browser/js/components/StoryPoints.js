@@ -1,4 +1,7 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
+import PropTypes from 'prop-types';
+
 import { Form, FormGroup, Label, Input } from 'reactstrap';
 import io from 'socket.io-client';
 import events from '../../../events';
@@ -16,6 +19,86 @@ const STORAGE_TOKEN_KEY = 'token';
 const STORAGE_IS_QA_KEY = 'isQA';
 const STORAGE_ROOM_NAME = 'room';
 
+const SELECT_ID = 'storyPointsSelect';
+let EXTERNAL_POPUP_WINDOW = null;
+
+/**
+ * Component for handling picking story points in a pop up
+ * Use case is so that the presenter doesn't have to have their selection
+ * shown on the display
+ *
+ * @class StoryPointsPopup
+ * @extends {React.Component}
+ */
+class StoryPointsPopup extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.containerEl = document.createElement('div');
+    this.externalWindow = null;
+  }
+
+  static propTypes = {
+    cleanup: PropTypes.func.isRequired,
+    selectStoryPoints: PropTypes.func.isRequired,
+  }
+
+  componentDidMount() {
+    this.externalWindow = window.open('', '', 'width=600,height=400');
+    EXTERNAL_POPUP_WINDOW = this.externalWindow;
+    this.externalWindow.document.body.appendChild(this.containerEl);
+    this.externalWindow.onbeforeunload = this.props.cleanup;
+    // for some unknown reason, a select element's on change event handler
+    // will not fire when in a react portal when handled by react
+    // so we have to attach this manually
+    this.externalWindow.document.getElementById(SELECT_ID).onchange = this.props.selectStoryPoints;
+  }
+
+  componentWillUnmount() {
+    this.externalWindow.close();
+    EXTERNAL_POPUP_WINDOW = null;
+  }
+
+  render() {
+    if (!this.containerEl) {
+      return null;
+    }
+    return ReactDOM.createPortal(this.props.children, this.containerEl);
+  }
+}
+
+class PointSelection extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
+  static propTypes = {
+    selectStoryPoints: PropTypes.func.isRequired,
+    selected: PropTypes.any,
+  }
+
+  render() {
+    return (
+      <Form>
+        <FormGroup className={style['left-form-section']}>
+          <Label for={SELECT_ID} className={style['white-label']}>Select Story Point Value</Label>
+          <Input type="select" name={SELECT_ID} id={SELECT_ID} className={`${style['input']} ${style['select']}`}
+            onChange={this.props.selectStoryPoints} value={this.props.selected}
+          >
+            {
+              STORY_POINT_VALUES.map(v => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))
+            }
+          </Input>
+        </FormGroup>
+      </Form>
+    );
+  }
+}
+
 class StoryPoints extends React.Component {
   constructor(props) {
     super(props);
@@ -27,6 +110,7 @@ class StoryPoints extends React.Component {
       initialized: false,
       isQA: false,
       disconnected: false,
+      selectPointsInPopup: false,
     };
   }
 
@@ -40,7 +124,13 @@ class StoryPoints extends React.Component {
 
     socket.on(events.STATE_UPDATE, (data) => {
       if (data.reset) {
-        document.getElementById('storyPointsSelect').value = NO_SELECTION;
+        let elem = document.getElementById(SELECT_ID);
+        if (elem == null && EXTERNAL_POPUP_WINDOW != null) {
+          elem = EXTERNAL_POPUP_WINDOW.document.getElementById(SELECT_ID);
+        }
+        if (elem != null) {
+          elem.value = NO_SELECTION;
+        }
       }
 
       this.setState({
@@ -276,6 +366,12 @@ class StoryPoints extends React.Component {
     window.location.reload();
   }
 
+  toggleSelectPointsInPopup = () => {
+    this.setState((prevState) => ({
+      selectPointsInPopup: !prevState.selectPointsInPopup
+    }));
+  }
+
   render() {
     if (!this.state.initialized) {
       return (
@@ -311,21 +407,11 @@ class StoryPoints extends React.Component {
                 Room: <span className={style['room-name']}>{this.state.room}</span>
                 </span>
               </div>
+              {
+                !this.state.selectPointsInPopup &&
+                <PointSelection selectStoryPoints={this.selectStoryPoints} selected={this.state.users[this.state.name].value}/>
+              }
               <Form>
-                <FormGroup className={style['left-form-section']}>
-                  <Label for="storyPointsSelect" className={style['white-label']}>Select Story Point Value</Label>
-                  <Input type="select" name="storyPointsSelect" id="storyPointsSelect" className={`${style['input']} ${style['select']}`} 
-                    onChange={this.selectStoryPoints}
-                  >
-                    {
-                      STORY_POINT_VALUES.map(v => (
-                        <option key={v} value={v}>
-                          {v}
-                        </option>
-                      ))
-                    }
-                  </Input>
-                </FormGroup>
                 <FormGroup check>
                   <Label check className={style['inline-checkbox-label']}>
                     <Input type="checkbox"
@@ -347,6 +433,21 @@ class StoryPoints extends React.Component {
                     <button className={`btn btn-danger ${style['button-red']}`}  type="button" onClick={this.toggleStoryPointSelectionVisibility}>
                       {this.state.visibility ? 'Hide' : 'Show'} Point Selections
                     </button>
+                    <button className={`btn btn-danger ${style['button-red']}`} type="button" onClick={this.toggleSelectPointsInPopup}>
+                      Toggle Select Points in Popup
+                    </button>
+                    {
+                      this.state.selectPointsInPopup &&
+                      <StoryPointsPopup
+                        cleanup={this.toggleSelectPointsInPopup}
+                        selectStoryPoints={this.selectStoryPoints}
+                      >
+                        <PointSelection
+                          selectStoryPoints={this.selectStoryPoints}
+                          selected={this.state.users[this.state.name].value}
+                        />
+                      </StoryPointsPopup>
+                    }
                     <button className={`btn btn-danger ${style['button-red']}`} type="button" onClick={this.nextStory}>
                       Next Story
                     </button>
