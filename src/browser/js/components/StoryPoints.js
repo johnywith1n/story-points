@@ -34,36 +34,52 @@ class StoryPointsPopup extends React.Component {
   constructor(props) {
     super(props);
 
-    this.containerEl = document.createElement('div');
-    this.externalWindow = null;
+    this.closed = false;
+    this.state = {
+      externalWindow: null,
+      containerEl: null
+    };
   }
 
   static propTypes = {
     cleanup: PropTypes.func.isRequired,
-    selectStoryPoints: PropTypes.func.isRequired,
   }
 
   componentDidMount() {
-    this.externalWindow = window.open('', '', 'width=600,height=400');
-    EXTERNAL_POPUP_WINDOW = this.externalWindow;
-    this.externalWindow.document.body.appendChild(this.containerEl);
-    this.externalWindow.onbeforeunload = this.props.cleanup;
-    // for some unknown reason, a select element's on change event handler
-    // will not fire when in a react portal when handled by react
-    // so we have to attach this manually
-    this.externalWindow.document.getElementById(SELECT_ID).onchange = this.props.selectStoryPoints;
+    // need to move node to new window BEFORE rendering
+    // see https://github.com/facebook/react/issues/12355#issuecomment-410996235
+    let externalWindow = window.open('', '', 'width=600,height=400');
+    EXTERNAL_POPUP_WINDOW = externalWindow;
+    let containerEl = document.createElement('div');
+    externalWindow.document.body.appendChild(containerEl);
+    externalWindow.onbeforeunload = this.cleanup;
+    this.setState({
+      externalWindow,
+      containerEl
+    });
   }
 
   componentWillUnmount() {
-    this.externalWindow.close();
+    this.state.externalWindow.close();
     EXTERNAL_POPUP_WINDOW = null;
   }
 
+  cleanup = () => {
+    // prevent the onbeforeunload from firing multiple times
+    // if we close the window manually
+    if (this.closed) {
+      return;
+    }
+    this.closed = true;
+    this.props.cleanup();
+  }
+
   render() {
-    if (!this.containerEl) {
+    const { containerEl } = this.state;
+    if (!containerEl) {
       return null;
     }
-    return ReactDOM.createPortal(this.props.children, this.containerEl);
+    return ReactDOM.createPortal(this.props.children, this.state.containerEl);
   }
 }
 
@@ -171,6 +187,9 @@ class StoryPoints extends React.Component {
     window.onbeforeunload = () => {
       if (this.state.name) {
         socket.emit(events.REMOVE_USER, this.createPayload());
+      }
+      if (EXTERNAL_POPUP_WINDOW) {
+        EXTERNAL_POPUP_WINDOW.close();
       }
     };
   }
@@ -367,9 +386,34 @@ class StoryPoints extends React.Component {
   }
 
   toggleSelectPointsInPopup = () => {
-    this.setState((prevState) => ({
-      selectPointsInPopup: !prevState.selectPointsInPopup
-    }));
+    if (this.state.selectPointsInPopup) {
+      this.setState({
+        selectPointsInPopup: false
+      });
+      if (EXTERNAL_POPUP_WINDOW != null) {
+        EXTERNAL_POPUP_WINDOW.close();
+      }
+    } else {
+      this.setState({
+        selectPointsInPopup: true
+      });
+    }
+  }
+
+  closeSelectPopup = () => {
+    this.setState({
+      selectPointsInPopup: false
+    });
+  }
+
+  getSelectedPointValue = () => {
+    let value = this.state.users[this.state.name].value;
+
+    if (value == null) {
+      value = NO_SELECTION;
+    }
+
+    return value;
   }
 
   render() {
@@ -408,9 +452,23 @@ class StoryPoints extends React.Component {
                 </span>
               </div>
               {
-                !this.state.selectPointsInPopup &&
-                <PointSelection selectStoryPoints={this.selectStoryPoints} selected={this.state.users[this.state.name].value}/>
+                this.state.selectPointsInPopup ?
+                  <StoryPointsPopup
+                    cleanup={this.closeSelectPopup}
+                    selectStoryPoints={this.selectStoryPoints}
+                  >
+                    <PointSelection
+                      selectStoryPoints={this.selectStoryPoints}
+                      selected={this.getSelectedPointValue()}
+                    />
+                    <button onClick={this.closeSelectPopup}>Close</button>
+                  </StoryPointsPopup>
+                  :
+                  <PointSelection selectStoryPoints={this.selectStoryPoints} selected={this.getSelectedPointValue()}/>
               }
+              <button className={`btn btn-danger ${style['button-red']} ${style['toggle-popup-button']}`} type="button" onClick={this.toggleSelectPointsInPopup}>
+                Toggle Select Points in Popup
+              </button>
               <Form>
                 <FormGroup check>
                   <Label check className={style['inline-checkbox-label']}>
@@ -433,21 +491,6 @@ class StoryPoints extends React.Component {
                     <button className={`btn btn-danger ${style['button-red']}`}  type="button" onClick={this.toggleStoryPointSelectionVisibility}>
                       {this.state.visibility ? 'Hide' : 'Show'} Point Selections
                     </button>
-                    <button className={`btn btn-danger ${style['button-red']}`} type="button" onClick={this.toggleSelectPointsInPopup}>
-                      Toggle Select Points in Popup
-                    </button>
-                    {
-                      this.state.selectPointsInPopup &&
-                      <StoryPointsPopup
-                        cleanup={this.toggleSelectPointsInPopup}
-                        selectStoryPoints={this.selectStoryPoints}
-                      >
-                        <PointSelection
-                          selectStoryPoints={this.selectStoryPoints}
-                          selected={this.state.users[this.state.name].value}
-                        />
-                      </StoryPointsPopup>
-                    }
                     <button className={`btn btn-danger ${style['button-red']}`} type="button" onClick={this.nextStory}>
                       Next Story
                     </button>
