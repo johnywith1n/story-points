@@ -10,6 +10,7 @@
     "build": "webpack --config webpack.prod.js",
     "deploy": "git push heroku master",
   },
+  "heroku-run-build-script": true,
   "devDependencies": {
     "@types/react": "16.7.18",
     "babel-core": "6.26.3",
