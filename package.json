@@ -9,7 +9,6 @@
     "start-dev": "SECRET=password ADMIN_SECRET=password nodemon index.js",
     "build": "webpack --config webpack.prod.js",
     "deploy": "git push heroku master",
-    "postinstall": "yarn build"
   },
   "devDependencies": {
     "@types/react": "16.7.18",
