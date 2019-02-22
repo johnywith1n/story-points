@@ -488,7 +488,7 @@ class StoryPoints extends React.Component {
               {
                 this.state.showAdmin &&
                   <React.Fragment>
-                    <button className={`btn btn-danger ${style['button-red']}`}  type="button" onClick={this.toggleStoryPointSelectionVisibility}>
+                    <button className={`btn ${style['button-green']}`}  type="button" onClick={this.toggleStoryPointSelectionVisibility}>
                       {this.state.visibility ? 'Hide' : 'Show'} Point Selections
                     </button>
                     <button className={`btn btn-danger ${style['button-red']}`} type="button" onClick={this.nextStory}>

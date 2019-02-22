@@ -8,7 +8,7 @@
     "webpack-dev": "webpack-dev-server --port 9099 --progress --colors --hot --config ./webpack.dev.js",
     "start-dev": "SECRET=password ADMIN_SECRET=password nodemon index.js",
     "build": "webpack --config webpack.prod.js",
-    "deploy": "git push heroku master",
+    "deploy": "git push heroku master"
   },
   "heroku-run-build-script": true,
   "devDependencies": {

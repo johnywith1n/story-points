@@ -128,6 +128,21 @@
   min-width: 15rem;
 }
 
+.button-green {
+  background-color: #28a745;
+  border: none;
+  padding: 0.5rem;
+  opacity: 0.8;
+  transition: background-color 0.25s ease;
+  letter-spacing: 1px;
+  color: #ffffff;
+  min-width: 15rem;
+}
+
+.button-green:hover {
+  background-color: #2dda55;
+}
+
 .button-red:hover {
   background-color: #e63c3c;
   color: #ffffff;
