@@ -23,7 +23,7 @@ const getSecret = () => {
 
 const getAdminSecret = () => {
   return process.env.ADMIN_SECRET;
-}
+};
 
 const verifyPayload = (data, requireRoom=true) => {
   const secret = getSecret();
@@ -45,7 +45,7 @@ const verifyAdminPayload = (data) =>{
   }
 
   return data.secret === secret;
-}
+};
 
 app.get('/', (req, res) => {
   const secret = req.query.secret;
