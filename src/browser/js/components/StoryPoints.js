@@ -467,7 +467,7 @@ class StoryPoints extends React.Component {
                   <PointSelection selectStoryPoints={this.selectStoryPoints} selected={this.getSelectedPointValue()}/>
               }
               <button className={`btn btn-danger ${style['button-red']} ${style['toggle-popup-button']}`} type="button" onClick={this.toggleSelectPointsInPopup}>
-                Toggle Select Points in Popup
+                Toggle Points Popup
               </button>
               <Form>
                 <FormGroup check>
